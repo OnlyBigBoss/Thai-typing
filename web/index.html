@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="th" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ฝึกพิมพ์ไทย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header class="topbar">
+    <div class="config">
+      <div class="group">
+        <button type="button" id="realWords" class="switch" role="switch" aria-checked="true"
+                title="เปิด: ใช้คำจริง · ปิด: ตัวอักษรสุ่มปนคำจริง"><span class="knob" aria-hidden="true"></span>คำจริง</button>
+      </div>
+      <div class="group" id="modes" aria-label="โหมด">
+        <button type="button" data-mode="lesson">บทเรียน</button>
+        <button type="button" data-mode="time">เวลา</button>
+        <button type="button" data-mode="words">จำนวนคำ</button>
+      </div>
+      <div class="group" id="amounts" aria-label="ตัวเลือก"></div>
+    </div>
+    <button id="theme" class="icon" type="button" title="สลับธีมสว่าง/มืด" aria-label="สลับธีม">◐</button>
+  </header>
+
+  <section class="stage">
+    <div id="counter" class="counter" aria-live="polite"></div>
+    <div id="text" class="text"></div>
+    <textarea id="input" class="hidden-input" autocomplete="off" autocapitalize="off"
+              spellcheck="false" aria-label="พิมพ์ที่นี่"></textarea>
+    <div id="after" class="after" hidden>
+      <button type="button" id="afterRepeat">↺ พิมพ์ชุดเดิมอีกครั้ง</button>
+      <button type="button" id="afterNew">↻ ชุดใหม่</button>
+      <button type="button" id="afterNext" class="primary">บทถัดไป: <span></span> ›</button>
+    </div>
+    <button id="restart" class="icon restart" type="button" title="เริ่มใหม่ (Tab + Enter)" aria-label="เริ่มใหม่">↻</button>
+    <p class="keyhint"><kbd>Tab</kbd> + <kbd>Enter</kbd> เริ่มชุดใหม่ได้ทุกเมื่อ</p>
+  </section>
+
+  <section class="kbwrap">
+    <div id="keyboard" class="keyboard" aria-hidden="true"></div>
+    <div id="legend" class="legend"></div>
+  </section>
+</main>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
