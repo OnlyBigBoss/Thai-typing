@@ -603,8 +603,16 @@
 
   // Backspace removes one code point (e.g. just the tone mark), not the whole grapheme cluster
   function onKeyDown(e) {
-    // Enter never types a character; after a round it starts a new set
-    if (e.key === "Enter") { e.preventDefault(); if (finished) start(); return; }
+    // Enter never types a character. After a round: Enter = new set, Shift+Enter = same set again,
+    // Ctrl+Enter = next lesson (the shortcuts are printed on the buttons)
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (!finished) return;
+      if (e.shiftKey) start(baseText);
+      else if (e.ctrlKey || e.metaKey) { if (hasNextLesson()) nextLesson(); }
+      else start();
+      return;
+    }
     if (e.key !== "Backspace" || e.ctrlKey || e.altKey || e.metaKey) return;
     e.preventDefault();
     if (finished || !inputEl.value) return;
@@ -888,6 +896,7 @@
     if (e.key.length === 1 && touchOnly) $("notice").hidden = true; // a real keyboard is attached
     if (viewing === "stats") { if (e.key === "Escape") showView("practice"); return; }
     if (e.key === "Escape") { e.preventDefault(); start(); return; }
+    if (e.key === "Enter" && finished && document.activeElement === document.body) { onKeyDown(e); return; }
     if (!$("intro").hidden) return;
     const tag = document.activeElement && document.activeElement.tagName;
     if (e.key.length === 1 && tag !== "TEXTAREA" && tag !== "INPUT" && tag !== "SELECT") inputEl.focus();
