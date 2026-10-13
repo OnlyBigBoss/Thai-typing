@@ -183,6 +183,8 @@
     real.classList.toggle("active", settings.realWords);
     const box = $("amounts");
     box.replaceChildren();
+    $("lessonStrip").hidden = settings.mode !== "lesson";
+    if (settings.mode === "lesson") renderStrip($("lessonStrip"), true);
     if (settings.mode === "lesson") {
       const sel = el("select");
       sel.setAttribute("aria-label", "บทเรียน");
@@ -220,6 +222,23 @@
     custom.classList.toggle("active", isCustom);
     custom.addEventListener("click", () => openCustom(custom));
     box.appendChild(custom);
+  }
+  // one box per lesson colored by its level (outline = never typed, grey = typed but not passed,
+  // yellow = passed, green = passed with excellence); the level name is only in the label
+  const LEVEL_NAMES = { none: "ยังไม่ได้ฝึก", tried: "ฝึกแล้ว ยังไม่ผ่าน", pass: "ผ่านบท", excellent: "ผ่านดีเยี่ยม" };
+  function renderStrip(box, clickable) {
+    box.replaceChildren(...DATA.lessons.map((l, i) => {
+      const { level, best } = store.lessonLevel(settings.criteria, l.id);
+      const c = el(clickable ? "button" : "span", `lv lv-${level}`, i + 1);
+      c.title = l.title + (best ? `\nดีที่สุด: ความแม่นยำ ${best.acc}% · ${best.wpm} WPM` : "");
+      c.setAttribute("aria-label", `${l.title}: ${LEVEL_NAMES[level]}`);
+      if (clickable) {
+        c.type = "button";
+        if (i === settings.lesson) { c.classList.add("current"); c.setAttribute("aria-current", "true"); }
+        c.addEventListener("click", () => update({ lesson: i }));
+      }
+      return c;
+    }));
   }
   const amountKey = () => ({ lesson: "lessonCount", weak: "weakCount" })[settings.mode] || settings.mode;
   // a key cap in its finger color, for "new keys" and "focus" chips
@@ -459,11 +478,9 @@
     inputEl.value = "";
     textEl.classList.remove("typing");
     $("stage").classList.remove("typing");
-    clearHeat(kbEl);
-    $("legend").hidden = false;
-    $("heatLegend").hidden = true;
-    $("result").hidden = true;
-    $("after").hidden = true;
+    advancedFrom = null;
+    const dlg = $("resultDlg");
+    if (dlg.open) dlg.close();
     $("restart").hidden = false;
     $("weakEmpty").hidden = true;
     if (settings.mode === "weak") {
@@ -491,7 +508,18 @@
     inputEl.focus();
   }
   const hasNextLesson = () => settings.mode === "lesson" && settings.lesson < DATA.lessons.length - 1;
-  function nextLesson() { if (hasNextLesson()) update({ lesson: settings.lesson + 1 }); }
+  // set when a round passed with excellence moved us on: "same set again" goes back to that lesson
+  let advancedFrom = null;
+  // the three after-round actions (buttons, Enter / Shift+Enter / Ctrl+Enter)
+  function again() {
+    if (advancedFrom !== null) { settings.lesson = advancedFrom; saveSettings(); renderConfig(); }
+    start(baseText);
+  }
+  const fresh = () => start();
+  function goNext() {
+    if (advancedFrom !== null) fresh(); // already on the next lesson
+    else if (hasNextLesson()) update({ lesson: settings.lesson + 1 });
+  }
 
   function saveRound() {
     if (!total) return null;
@@ -512,34 +540,53 @@
   }
 
   const clock = (s) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
-  // under the text after a round: wpm, accuracy, time, the 3 most-missed chars, lesson pass
+  // a char as a finger-colored chip with a small note after it
+  function noteChip(ch, note, title) {
+    const wrap = el("span", "noted");
+    const c = keyChip(ch);
+    if (ch === " ") c.textContent = "เว้นวรรค";
+    wrap.title = title;
+    wrap.append(c, el("small", null, note));
+    return wrap;
+  }
+  const SLOW = { minTimed: 3, ratio: 1.5 };
+  // chars of this round that took longest compared with the round's own median char
+  function slowChars(keys) {
+    const avg = Object.entries(keys).filter(([, k]) => k[2] > 0).map(([ch, k]) => [ch, k[3] / k[2], k[2]]);
+    const sorted = avg.map((a) => a[1]).sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)] || 0;
+    if (!median) return [];
+    return avg.filter(([, ms, n]) => n >= SLOW.minTimed && ms / median >= SLOW.ratio)
+      .map(([ch, ms]) => ({ ch, ms, ratio: ms / median })).sort((a, b) => b.ratio - a.ratio).slice(0, 3);
+  }
+  const ruleText = (rule) => [rule.acc.on && `ความแม่นยำ ≥ ${rule.acc.v}%`, rule.wpm.on && `ความเร็ว ≥ ${rule.wpm.v} WPM`]
+    .filter(Boolean).join(" และ ");
+  // the result popup: numbers, lesson pass, what went wrong or slow, and the round's heat map
   function renderResult(round) {
     $("rWpm").textContent = round.wpm;
     $("rAcc").textContent = round.acc + "%";
     $("rTime").textContent = clock(round.sec);
     const missed = Object.entries(round.keys).filter(([, k]) => k[1] > 0)
       .sort((a, b) => b[1][1] - a[1][1] || b[1][1] / b[1][0] - a[1][1] / a[1][0]).slice(0, 3);
-    const box = $("rMissed");
-    box.replaceChildren();
-    if (missed.length) missed.forEach(([ch, k]) => {
-      const c = keyChip(ch === " " ? " " : ch);
-      if (ch === " ") c.textContent = "เว้นวรรค";
-      c.title = `ผิด ${k[1]} จาก ${k[0]} ครั้ง`;
-      box.appendChild(c);
-    });
-    else box.textContent = "ไม่มี";
-    const pass = $("rPass");
-    pass.hidden = settings.mode !== "lesson";
+    $("rMissed").replaceChildren(...(missed.length
+      ? missed.map(([ch, k]) => noteChip(ch, `${k[1]}/${k[0]}`, `ผิด ${k[1]} จาก ${k[0]} ครั้ง`))
+      : [document.createTextNode("ไม่มี")]));
+    const slow = slowChars(round.keys);
+    $("rSlow").replaceChildren(...(slow.length
+      ? slow.map((s) => noteChip(s.ch, `×${s.ratio.toFixed(1)}`, `ช้ากว่าปกติ ${s.ratio.toFixed(1)} เท่า (เฉลี่ย ${secs(s.ms)})`))
+      : [document.createTextNode("ไม่มี")]));
+    const pass = $("rPass"), hint = $("rHint");
+    pass.hidden = hint.hidden = settings.mode !== "lesson";
     if (settings.mode === "lesson") {
       const rule = store.ruleFor(settings.criteria, round.lesson);
-      const ok = store.meets(round, rule);
-      pass.className = "pass" + (ok ? " ok" : "");
-      const need = [];
-      if (rule.acc.on) need.push(`ความแม่นยำ ≥ ${rule.acc.v}%`);
-      if (rule.wpm.on) need.push(`ความเร็ว ≥ ${rule.wpm.v} WPM`);
-      pass.textContent = ok ? "✓ ผ่านบทนี้แล้ว" : `ยังไม่ผ่านบทนี้ เกณฑ์คือ ${need.join(" และ ")}`;
+      const level = store.roundLevel(round, rule);
+      pass.className = "pass lvl-" + level;
+      pass.textContent = level === "fail" ? `ยังไม่ผ่านบทนี้ เกณฑ์คือ ${ruleText(rule)}` : "✓ ผ่านบทนี้แล้ว";
+      hint.hidden = level !== "pass";
+      hint.textContent = `ได้${ruleText(store.excellentRule(rule))} จะเป็นสีเขียว`;
     }
-    $("result").hidden = false;
+    buildKeyboard($("rKeyboard"));
+    paintHeat($("rKeyboard"), round.keys);
   }
 
   function finish() {
@@ -550,19 +597,26 @@
     clearInterval(timerId);
     const round = saveRound();
     render();
-    if (round) {
-      renderResult(round);
-      paintHeat(kbEl, round.keys);
-      $("legend").hidden = true;
-      $("heatLegend").hidden = false;
-      if (settings.mode === "lesson") renderConfig(); // ✓ in the lesson list
+    // a lesson passed with excellence moves on to the next lesson by itself
+    const excellent = round && settings.mode === "lesson"
+      && store.roundLevel(round, store.ruleFor(settings.criteria, round.lesson)) === "excellent";
+    if (excellent && hasNextLesson()) {
+      advancedFrom = settings.lesson;
+      settings.lesson += 1;
+      saveSettings();
     }
+    if (settings.mode === "lesson") renderConfig(); // lesson strip and ✓ in the lesson list
+    const moved = $("rAdvanced");
+    moved.hidden = advancedFrom === null;
+    moved.textContent = `ไปบทถัดไปแล้ว: ${currentLesson().title}`;
     // what next: same set again, a new set, or (in lessons) the next lesson
     const next = $("afterNext");
-    next.hidden = !hasNextLesson();
-    if (hasNextLesson()) next.querySelector("span").textContent = DATA.lessons[settings.lesson + 1].title;
+    next.hidden = advancedFrom !== null || !hasNextLesson();
+    if (!next.hidden) next.querySelector("span").textContent = DATA.lessons[settings.lesson + 1].title;
     $("restart").hidden = true;
-    $("after").hidden = false;
+    if (round) renderResult(round);
+    $("resultDlg").showModal();
+    $("afterNew").focus();
   }
 
   function onInput() {
@@ -608,9 +662,9 @@
     if (e.key === "Enter") {
       e.preventDefault();
       if (!finished) return;
-      if (e.shiftKey) start(baseText);
-      else if (e.ctrlKey || e.metaKey) { if (hasNextLesson()) nextLesson(); }
-      else start();
+      if (e.shiftKey) again();
+      else if (e.ctrlKey || e.metaKey) goNext();
+      else fresh();
       return;
     }
     if (e.key !== "Backspace" || e.ctrlKey || e.altKey || e.metaKey) return;
@@ -702,6 +756,7 @@
       (v) => { statsView.range = v; renderStats(); });
     segmented("sMode", [["all", "ทุกโหมด"], ...Object.entries(MODE_NAMES)], statsView.mode,
       (v) => { statsView.mode = v; renderStats(); });
+    renderStrip($("sLessons"), false);
     const list = statsRounds();
     const has = list.length > 0;
     $("sEmpty").hidden = has;
@@ -848,9 +903,17 @@
   document.querySelectorAll("#modes button").forEach((b) =>
     b.addEventListener("click", () => update({ mode: b.dataset.mode })));
   $("restart").addEventListener("click", () => start());
-  $("afterRepeat").addEventListener("click", () => start(baseText));
-  $("afterNew").addEventListener("click", () => start());
-  $("afterNext").addEventListener("click", nextLesson);
+  $("afterRepeat").addEventListener("click", again);
+  $("afterNew").addEventListener("click", fresh);
+  $("afterNext").addEventListener("click", goNext);
+  // the result popup closes only through its actions: ×, Esc and Enter start a new set
+  $("resultClose").addEventListener("click", fresh);
+  $("resultDlg").addEventListener("cancel", (e) => { e.preventDefault(); fresh(); });
+  $("resultDlg").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault(); // not a click on the focused button: the modifiers pick the action
+    if (e.shiftKey) again(); else if (e.ctrlKey || e.metaKey) goNext(); else fresh();
+  });
   $("theme").addEventListener("click", () => {
     setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
     if (viewing === "practice") inputEl.focus();

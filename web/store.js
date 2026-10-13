@@ -92,6 +92,28 @@
     const rule = ruleFor(criteria, lessonId), since = criteria.since[lessonId] || 0;
     return list.some((r) => r.mode === "lesson" && r.lesson === lessonId && r.at > since && meets(r, rule));
   }
+  // "passed with excellence" is derived from the pass rule, never set by the user: accuracy at
+  // least halfway from the pass level to 100% (95 -> 98; 95 is the base when accuracy is off),
+  // and when speed counts, at least 120% of the pass speed
+  function excellentRule(rule) {
+    const base = rule.acc.on ? rule.acc.v : 95;
+    return { acc: { on: true, v: Math.ceil((base + 100) / 2) },
+      wpm: { on: rule.wpm.on, v: Math.ceil(rule.wpm.v * 1.2) } };
+  }
+  // a round's level against a rule: "excellent" | "pass" | "fail"
+  const roundLevel = (round, rule) => (!meets(round, rule) ? "fail" : meets(round, excellentRule(rule)) ? "excellent" : "pass");
+  // a lesson's level: the best of its rounds since the current criteria were set; "tried" when it
+  // has rounds (any time) but none of them passes now, "none" when it was never typed
+  function lessonLevel(criteria, lessonId, list = rounds()) {
+    const rule = ruleFor(criteria, lessonId), since = criteria.since[lessonId] || 0;
+    const mine = list.filter((r) => r.mode === "lesson" && r.lesson === lessonId);
+    const recent = mine.filter((r) => r.at > since);
+    const best = [...recent].sort((a, b) => b.acc - a.acc || b.wpm - a.wpm)[0] || null;
+    const levels = recent.map((r) => roundLevel(r, rule));
+    const level = levels.includes("excellent") ? "excellent" : levels.includes("pass") ? "pass" : mine.length ? "tried" : "none";
+    return { level, best };
+  }
+
   // saving new criteria: lessons whose effective rule changed lose their pass until re-typed
   function applyCriteria(before, after, lessonIds, now = Date.now()) {
     const next = clone(after);
@@ -108,5 +130,6 @@
     rounds, addRound, mergeRounds, clearRounds, onRound,
     sumKeys, weakKeys, WEAK,
     DEFAULT_RULE, defaultCriteria, ruleFor, meets, passed, applyCriteria, clone,
+    excellentRule, roundLevel, lessonLevel,
   };
 })();

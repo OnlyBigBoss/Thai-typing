@@ -57,6 +57,7 @@
     </section>
 
     <section id="stage" class="stage">
+      <nav id="lessonStrip" class="lessonStrip" aria-label="บทเรียน" hidden></nav>
       <div class="stagehead">
         <div id="counter" class="counter" aria-live="polite"></div>
         <div id="newKeys" class="newKeys" hidden></div>
@@ -65,20 +66,6 @@
       <p id="weakEmpty" class="weakEmpty" hidden></p>
       <textarea id="input" class="hidden-input" autocomplete="off" autocapitalize="off"
                 spellcheck="false" aria-label="พิมพ์ที่นี่"></textarea>
-      <div id="result" class="result" hidden aria-live="polite">
-        <div class="hero"><span id="rWpm"></span><small>WPM</small></div>
-        <dl>
-          <div><dt>ความแม่นยำ</dt><dd id="rAcc"></dd></div>
-          <div><dt>เวลา</dt><dd id="rTime"></dd></div>
-          <div><dt>ผิดบ่อย</dt><dd id="rMissed" class="chips"></dd></div>
-        </dl>
-        <p id="rPass" class="pass" hidden></p>
-      </div>
-      <div id="after" class="after" hidden>
-        <button type="button" id="afterRepeat">↺ พิมพ์ชุดคำเดิมอีกครั้ง <kbd>Shift</kbd>+<kbd>Enter</kbd></button>
-        <button type="button" id="afterNew">↻ ชุดคำใหม่ <kbd>Enter</kbd></button>
-        <button type="button" id="afterNext" class="primary">บทถัดไป: <span></span> › <kbd>Ctrl</kbd>+<kbd>Enter</kbd></button>
-      </div>
       <button id="restart" class="icon restart" type="button" title="เริ่มใหม่ (Tab + Enter)" aria-label="เริ่มใหม่">↻</button>
       <p class="keyhint"><kbd>Tab</kbd> + <kbd>Enter</kbd> เริ่มชุดคำใหม่ได้ทุกเมื่อ</p>
     </section>
@@ -86,10 +73,6 @@
     <section class="kbwrap">
       <div id="keyboard" class="keyboard" aria-hidden="true"></div>
       <div id="legend" class="legend"></div>
-      <div id="heatLegend" class="heatLegend" hidden>
-        <span>ผิดน้อย</span><i class="ramp"></i><span>ผิดมาก</span>
-        <span class="coldKey">ปุ่มจาง = ไม่ได้พิมพ์ในรอบนี้</span>
-      </div>
     </section>
   </div>
 
@@ -98,6 +81,8 @@
       <h1 id="statsTitle">สถิติ</h1>
       <button type="button" id="statsBack" class="ghost">กลับไปฝึก</button>
     </div>
+    <h2>บทเรียน</h2>
+    <div id="sLessons" class="lessonStrip static"></div>
     <div class="filters">
       <div class="group" id="sRange" aria-label="ช่วงเวลา"></div>
       <div class="group" id="sMode" aria-label="โหมด"></div>
@@ -130,6 +115,35 @@
     </div>
   </section>
 </main>
+
+<dialog id="resultDlg" class="dlg result" aria-labelledby="rTitle">
+  <button type="button" id="resultClose" class="icon close" aria-label="ปิดและเริ่มชุดคำใหม่" title="ปิด (Esc)">×</button>
+  <h2 id="rTitle" class="sr-only">ผลรอบนี้</h2>
+  <p id="rAdvanced" class="advanced" hidden></p>
+  <div class="resultTop">
+    <div class="hero"><span id="rWpm"></span><small>WPM</small></div>
+    <dl>
+      <div><dt>ความแม่นยำ</dt><dd id="rAcc"></dd></div>
+      <div><dt>เวลา</dt><dd id="rTime"></dd></div>
+    </dl>
+  </div>
+  <p id="rPass" class="pass" hidden></p>
+  <p id="rHint" class="passHint" hidden></p>
+  <dl class="analysis">
+    <div><dt>ผิดบ่อย</dt><dd id="rMissed" class="chips"></dd></div>
+    <div><dt>ช้า</dt><dd id="rSlow" class="chips"></dd></div>
+  </dl>
+  <div class="miniKb">
+    <div id="rKeyboard" class="keyboard" aria-hidden="true"></div>
+    <div class="heatLegend"><span>ผิดน้อย</span><i class="ramp"></i><span>ผิดมาก</span>
+      <span class="coldKey">ปุ่มจาง = ไม่ได้พิมพ์ในรอบนี้</span></div>
+  </div>
+  <div id="after" class="after">
+    <button type="button" id="afterRepeat">↺ พิมพ์ชุดคำเดิมอีกครั้ง <kbd>Shift</kbd>+<kbd>Enter</kbd></button>
+    <button type="button" id="afterNew">↻ ชุดคำใหม่ <kbd>Enter</kbd></button>
+    <button type="button" id="afterNext" class="primary">บทถัดไป: <span></span> › <kbd>Ctrl</kbd>+<kbd>Enter</kbd></button>
+  </div>
+</dialog>
 
 <dialog id="critDlg" class="dlg" aria-labelledby="critTitle">
   <h2 id="critTitle">เกณฑ์ผ่านบท</h2>
