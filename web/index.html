@@ -81,23 +81,24 @@
       <h1 id="statsTitle">สถิติ</h1>
       <button type="button" id="statsBack" class="ghost">กลับไปฝึก</button>
     </div>
-    <h2>บทเรียน</h2>
-    <div id="sLessons" class="lessonStrip static"></div>
     <div class="filters">
       <div class="group" id="sRange" aria-label="ช่วงเวลา"></div>
       <div class="group" id="sMode" aria-label="โหมด"></div>
     </div>
     <p id="sEmpty" class="empty" hidden>ยังไม่มีรอบที่พิมพ์จบในช่วงนี้ พิมพ์ให้จบสักรอบแล้วสถิติจะขึ้นที่นี่</p>
+    <div id="sFigures" class="figures">
+      <div class="hero"><span id="sWpm"></span><small>WPM เฉลี่ย</small></div>
+      <dl>
+        <div><dt>สูงสุด</dt><dd id="sBest"></dd></div>
+        <div><dt>ความแม่นยำเฉลี่ย</dt><dd id="sAcc"></dd></div>
+        <div><dt>จำนวนรอบ</dt><dd id="sRounds"></dd></div>
+        <div><dt>เวลาฝึกรวม</dt><dd id="sTime"></dd></div>
+      </dl>
+    </div>
+    <!-- lesson levels are current state, not filtered by the range above -->
+    <h2>บทเรียน</h2>
+    <div id="sLessons" class="lessonStrip static"></div>
     <div id="sBody">
-      <div class="figures">
-        <div class="hero"><span id="sWpm"></span><small>WPM เฉลี่ย</small></div>
-        <dl>
-          <div><dt>สูงสุด</dt><dd id="sBest"></dd></div>
-          <div><dt>ความแม่นยำเฉลี่ย</dt><dd id="sAcc"></dd></div>
-          <div><dt>จำนวนรอบ</dt><dd id="sRounds"></dd></div>
-          <div><dt>เวลาฝึกรวม</dt><dd id="sTime"></dd></div>
-        </dl>
-      </div>
       <h2>ความเร็วแต่ละรอบ</h2>
       <div class="chartKey"><span><i class="dotKey"></i>WPM ของรอบ</span><span><i class="lineKey"></i>ค่าเฉลี่ย 10 รอบล่าสุด</span></div>
       <div class="chartBox"><svg id="sChart" class="chart" role="img" aria-label="กราฟ WPM แต่ละรอบ"></svg></div>

@@ -761,6 +761,7 @@
     const has = list.length > 0;
     $("sEmpty").hidden = has;
     $("sBody").hidden = !has;
+    $("sFigures").hidden = !has;
     if (!has) return;
     const avg = (f) => list.reduce((a, r) => a + f(r), 0) / list.length;
     $("sWpm").textContent = Math.round(avg((r) => r.wpm));
@@ -785,7 +786,8 @@
     const pad = { l: 36, r: 12, t: 12, b: 26 };
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     svg.setAttribute("width", W); svg.setAttribute("height", H);
-    const maxY = Math.max(20, Math.ceil(Math.max(...list.map((r) => r.wpm)) / 10) * 10);
+    // 4 gridlines on round numbers: the top is a multiple of 20 so each step is a multiple of 5
+    const maxY = Math.max(20, Math.ceil(Math.max(...list.map((r) => r.wpm)) / 20) * 20);
     const n = list.length;
     const x = (i) => pad.l + (n === 1 ? (W - pad.l - pad.r) / 2 : (i / (n - 1)) * (W - pad.l - pad.r));
     const y = (v) => pad.t + (1 - v / maxY) * (H - pad.t - pad.b);

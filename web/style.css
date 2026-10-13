@@ -235,7 +235,7 @@ body[data-view="stats"] .config { visibility: hidden; }
 .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
 .figures { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 40px; margin-top: 28px; }
 .empty { margin-top: 28px; color: var(--muted); }
-.empty[hidden], #sBody[hidden] { display: none; }
+.empty[hidden], #sBody[hidden], .figures[hidden] { display: none; }
 .chartKey { display: flex; gap: 18px; font-size: .82rem; color: var(--muted); margin-bottom: 6px; }
 .chartKey span { display: inline-flex; align-items: center; gap: 6px; }
 .dotKey { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
