@@ -21,32 +21,140 @@
         <button type="button" data-mode="lesson">บทเรียน</button>
         <button type="button" data-mode="time">เวลา</button>
         <button type="button" data-mode="words">จำนวนคำ</button>
+        <button type="button" data-mode="weak">ปุ่มอ่อน</button>
       </div>
       <div class="group" id="amounts" aria-label="ตัวเลือก"></div>
     </div>
-    <button id="theme" class="icon" type="button" title="สลับธีมสว่าง/มืด" aria-label="สลับธีม">◐</button>
+    <nav class="tools">
+      <button id="statsBtn" class="icon" type="button" title="สถิติ" aria-label="สถิติ" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      </button>
+      <button id="accountBtn" class="icon" type="button" title="บัญชี" aria-label="บัญชี" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+      </button>
+      <button id="theme" class="icon" type="button" title="สลับธีมสว่าง/มืด" aria-label="สลับธีม">◐</button>
+    </nav>
   </header>
 
-  <section class="stage">
-    <div id="counter" class="counter" aria-live="polite"></div>
-    <div id="text" class="text"></div>
-    <textarea id="input" class="hidden-input" autocomplete="off" autocapitalize="off"
-              spellcheck="false" aria-label="พิมพ์ที่นี่"></textarea>
-    <div id="after" class="after" hidden>
-      <button type="button" id="afterRepeat">↺ พิมพ์ชุดเดิมอีกครั้ง</button>
-      <button type="button" id="afterNew">↻ ชุดใหม่</button>
-      <button type="button" id="afterNext" class="primary">บทถัดไป: <span></span> ›</button>
-    </div>
-    <button id="restart" class="icon restart" type="button" title="เริ่มใหม่ (Tab + Enter)" aria-label="เริ่มใหม่">↻</button>
-    <p class="keyhint"><kbd>Tab</kbd> + <kbd>Enter</kbd> เริ่มชุดใหม่ได้ทุกเมื่อ</p>
-  </section>
+  <div id="notice" class="notice" role="status" hidden>
+    <span>ต้องใช้คีย์บอร์ดจริงในการฝึกพิมพ์ ถ้าต่อคีย์บอร์ดไว้แล้ว เริ่มพิมพ์ได้เลย</span>
+    <button type="button" id="noticeClose" class="icon" aria-label="ปิดข้อความ">×</button>
+  </div>
 
-  <section class="kbwrap">
-    <div id="keyboard" class="keyboard" aria-hidden="true"></div>
-    <div id="legend" class="legend"></div>
+  <div id="practice">
+    <section id="intro" class="intro" hidden aria-labelledby="introTitle">
+      <h1 id="introTitle">เริ่มจากวางนิ้วให้ถูกที่</h1>
+      <div id="introKeys" class="introKeys" aria-hidden="true"></div>
+      <ul>
+        <li>วางนิ้วมือซ้ายบน ฟ ห ก ด และมือขวาบน ◌่ า ส ว นิ้วโป้งพักไว้บนเว้นวรรค</li>
+        <li>ปุ่ม ด กับ ◌่ มีปุ่มนูน คลำหาได้โดยไม่ต้องก้มมอง</li>
+        <li>สีบนแป้นพิมพ์บอกว่าใช้นิ้วไหนกด ปุ่มสีเดียวกันใช้นิ้วเดียวกัน</li>
+      </ul>
+      <div class="introActions">
+        <button type="button" id="introStart" class="primary">เริ่มบทเรียนแรก</button>
+        <button type="button" id="introSkip">ข้ามไปก่อน</button>
+      </div>
+    </section>
+
+    <section id="stage" class="stage">
+      <div class="stagehead">
+        <div id="counter" class="counter" aria-live="polite"></div>
+        <div id="newKeys" class="newKeys" hidden></div>
+      </div>
+      <div id="text" class="text"></div>
+      <p id="weakEmpty" class="weakEmpty" hidden></p>
+      <textarea id="input" class="hidden-input" autocomplete="off" autocapitalize="off"
+                spellcheck="false" aria-label="พิมพ์ที่นี่"></textarea>
+      <div id="result" class="result" hidden aria-live="polite">
+        <div class="hero"><span id="rWpm"></span><small>WPM</small></div>
+        <dl>
+          <div><dt>ความแม่นยำ</dt><dd id="rAcc"></dd></div>
+          <div><dt>เวลา</dt><dd id="rTime"></dd></div>
+          <div><dt>ผิดบ่อย</dt><dd id="rMissed" class="chips"></dd></div>
+        </dl>
+        <p id="rPass" class="pass" hidden></p>
+      </div>
+      <div id="after" class="after" hidden>
+        <button type="button" id="afterRepeat">↺ พิมพ์ชุดคำเดิมอีกครั้ง</button>
+        <button type="button" id="afterNew">↻ ชุดคำใหม่</button>
+        <button type="button" id="afterNext" class="primary">บทถัดไป: <span></span> ›</button>
+      </div>
+      <button id="restart" class="icon restart" type="button" title="เริ่มใหม่ (Tab + Enter)" aria-label="เริ่มใหม่">↻</button>
+      <p class="keyhint"><kbd>Tab</kbd> + <kbd>Enter</kbd> เริ่มชุดคำใหม่ได้ทุกเมื่อ</p>
+    </section>
+
+    <section class="kbwrap">
+      <div id="keyboard" class="keyboard" aria-hidden="true"></div>
+      <div id="legend" class="legend"></div>
+      <div id="heatLegend" class="heatLegend" hidden>
+        <span>ผิดน้อย</span><i class="ramp"></i><span>ผิดมาก</span>
+        <span class="coldKey">ปุ่มจาง = ไม่ได้พิมพ์ในรอบนี้</span>
+      </div>
+    </section>
+  </div>
+
+  <section id="statsView" class="statsView" hidden aria-labelledby="statsTitle">
+    <div class="statsHead">
+      <h1 id="statsTitle">สถิติ</h1>
+      <button type="button" id="statsBack" class="ghost">กลับไปฝึก</button>
+    </div>
+    <div class="filters">
+      <div class="group" id="sRange" aria-label="ช่วงเวลา"></div>
+      <div class="group" id="sMode" aria-label="โหมด"></div>
+    </div>
+    <p id="sEmpty" class="empty" hidden>ยังไม่มีรอบที่พิมพ์จบในช่วงนี้ พิมพ์ให้จบสักรอบแล้วสถิติจะขึ้นที่นี่</p>
+    <div id="sBody">
+      <div class="figures">
+        <div class="hero"><span id="sWpm"></span><small>WPM เฉลี่ย</small></div>
+        <dl>
+          <div><dt>สูงสุด</dt><dd id="sBest"></dd></div>
+          <div><dt>ความแม่นยำเฉลี่ย</dt><dd id="sAcc"></dd></div>
+          <div><dt>จำนวนรอบ</dt><dd id="sRounds"></dd></div>
+          <div><dt>เวลาฝึกรวม</dt><dd id="sTime"></dd></div>
+        </dl>
+      </div>
+      <h2>ความเร็วแต่ละรอบ</h2>
+      <div class="chartKey"><span><i class="dotKey"></i>WPM ของรอบ</span><span><i class="lineKey"></i>ค่าเฉลี่ย 10 รอบล่าสุด</span></div>
+      <div class="chartBox"><svg id="sChart" class="chart" role="img" aria-label="กราฟ WPM แต่ละรอบ"></svg></div>
+      <details>
+        <summary>ดูเป็นตาราง</summary>
+        <table id="sRoundsTable" class="table"></table>
+      </details>
+      <h2>ปุ่มที่พิมพ์ผิด</h2>
+      <div class="kbwrap stats">
+        <div id="sKeyboard" class="keyboard" aria-hidden="true"></div>
+        <div class="heatLegend"><span>ผิดน้อย</span><i class="ramp"></i><span>ผิดมาก</span>
+          <span class="coldKey">ปุ่มจาง = ไม่ได้พิมพ์ในช่วงนี้</span></div>
+      </div>
+      <table id="sMiss" class="table"></table>
+    </div>
   </section>
 </main>
+
+<dialog id="critDlg" class="dlg" aria-labelledby="critTitle">
+  <h2 id="critTitle">เกณฑ์ผ่านบท</h2>
+  <p class="hint">ถ้าเปลี่ยนเกณฑ์ของบทไหน ✓ ของบทนั้นจะหายไปจนกว่าจะพิมพ์ผ่านเกณฑ์ใหม่</p>
+  <div id="critBody"></div>
+  <div class="dlgActions">
+    <button type="button" id="critCancel">ยกเลิก</button>
+    <button type="button" id="critSave" class="primary">บันทึก</button>
+  </div>
+</dialog>
+
+<dialog id="accountDlg" class="dlg" aria-labelledby="accountTitle">
+  <h2 id="accountTitle">บัญชี</h2>
+  <div id="accountBody"></div>
+  <div class="dlgActions">
+    <button type="button" id="accountClose">ปิด</button>
+  </div>
+</dialog>
+
+<div id="tip" class="tip" role="tooltip" hidden></div>
+
 <script src="data.js"></script>
+<script src="config.js"></script>
+<script src="store.js"></script>
 <script src="app.js"></script>
+<script src="account.js"></script>
 </body>
 </html>

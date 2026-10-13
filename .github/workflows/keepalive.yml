@@ -1,0 +1,21 @@
+# Supabase pauses a free project after 7 days without activity, which would break sign-in and
+# sync (docs/adr/0002-supabase-local-first.md). A tiny read every 3 days keeps it awake.
+# Needs repository secrets SUPABASE_URL and SUPABASE_ANON_KEY (same values as web/config.js).
+name: keep Supabase awake
+on:
+  schedule:
+    - cron: "17 3 */3 * *"
+  workflow_dispatch:
+permissions: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: read one row
+        env:
+          URL: ${{ secrets.SUPABASE_URL }}
+          KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          curl --fail --silent --show-error \
+            "$URL/rest/v1/keepalive?select=id&limit=1" \
+            -H "apikey: $KEY" -H "Authorization: Bearer $KEY"
